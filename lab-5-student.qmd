@@ -146,6 +146,7 @@ included in the `teacher_evals_codebook.pdf`.
 #| label: setup
 # code chunk for loading packages
 
+library(tidyverse)
 ```
 
 **2. Load in the `teacher_evals` data.** 
@@ -154,6 +155,7 @@ included in the `teacher_evals_codebook.pdf`.
 #| label: load-data
 # code chunk for importing the data
 
+teacher_evals <- read_csv("data-raw/teacher_evals.csv")
 ```
 
 ### Data Inspection + Summary
@@ -162,16 +164,18 @@ included in the `teacher_evals_codebook.pdf`.
 
 ```{r}
 #| label: explore-data
-# you may want to use code to answer this question
+# This dataset provides information about the student survey responses, student success in the course, and breakdown of the course schedule. In regards to the student surveys, the data provides average scores, number of participants, and share of responses. For student success, the dataset possesses variables like grade_avg, grade_std, and percent_failed. To breakdown the metrics of the course to evaluate why students may respond the way they did, the dataset has variables for duration of the class, time of day and days of the week they were given. 
 
+glimpse(teacher_evals)
 ```
 
 **4. What is the unit of observation (i.e. a single row in the dataset) identified by?**
 
 ```{r}
 #| label: row-identification
-# you may want to use code to answer this question
+# COURSE ID !!!
 
+summary(teacher_evals)
 ```
 
 **5. Use _one_ `dplyr` pipeline to clean the data by:**
@@ -187,6 +191,16 @@ included in the `teacher_evals_codebook.pdf`.
 #| label: data-cleaning
 # code chunk for Q4
 
+teacher_evals_clean <- teacher_evals |>
+  rename(sex = gender) |>
+  filter(no_participants >= 10) |>
+  mutate(teacher_id = as.character(teacher_id),
+         SET_score_avg = as.numeric(SET_score_avg),
+         percent_failed_cur = as.numeric(percent_failed_cur)) |>
+  select(course_id, teacher_id, question_no, no_participants, resp_share, SET_score_avg, percent_failed_cur, academic_degree, seniority, sex)
+
+write_csv(teacher_evals_clean, file = "data-clean/teacher_evals_clean.csv")
+teacher_evals_clean <- read_csv("data-clean/teacher_evals_clean.csv")
 ```
 
 **6. How many unique instructors and unique courses are present in the cleaned dataset?**
@@ -195,6 +209,8 @@ included in the `teacher_evals_codebook.pdf`.
 #| label: unique-courses
 # code chunk for Q5
 
+teacher_evals_clean |>
+  n_distinct("teacher_id", "course_id", na.rm = TRUE)
 ```
 
 **7. One teacher-course combination has some missing values, coded as `NA`. Which instructor has these missing values? Which course? What variable are the missing values in?**
@@ -202,7 +218,11 @@ included in the `teacher_evals_codebook.pdf`.
 ```{r}
 #| label: uncovering-missing-values
 # code chunk for Q6
+# was confused on how to properly utilize if_any() - used chatgpt to see what code to add to provide a result (everything())
+#PAB3SE004PA, teacher id 56347, NAs in percent_failed
 
+teacher_evals_clean |>
+  filter(if_any(everything(), is.na))
 ```
 
 **8. What are the demographics of the instructors in this study? Investigate the variables `academic_degree`, `seniority`, and `sex` and summarize your findings in ~3 complete sentences.**
@@ -210,7 +230,14 @@ included in the `teacher_evals_codebook.pdf`.
 ```{r}
 #| label: exploring-demographics-of-instructors
 # code chunk for Q7
+# Among the teachers in this dataset, 32 have doctorates, 19 have a masters degree, 6 have no degrees, 7 have the prof label. There are 23 female teachers and 31 male teachers. Seniority varies from 1 to 11 - with the most having 1 year. 
 
+teacher_evals_clean |>
+  select(academic_degree, seniority, sex) |>
+  distinct(academic_degree, seniority, sex, .keep_all = TRUE) |>
+  count(academic_degree,
+        seniority,
+        sex)
 ```
 
 **9. Each course seems to have used a different subset of the nine evaluation questions. How many teacher-course combinations asked all nine questions?**
