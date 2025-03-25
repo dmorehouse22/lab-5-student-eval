@@ -1,7 +1,10 @@
 ---
-title: Lab 5: Student Evaluations of Teaching
+title: Lab 5 - Student Evaluations
 author: Danny Morehouse
-error: TRUE
+embed-resources: true
+code-tools: true
+echo: true
+error: true
 ---
 
 In this lab, we will be using the `dplyr` package to explore student evaluations
@@ -246,6 +249,11 @@ teacher_evals_clean |>
 #| label: teacher-course-asked-every-question
 # code chunk for Q8
 
+teacher_evals_clean |>
+  group_by(teacher_id, course_id) |>
+  summarize(distinct_questions = n_distinct(question_no)) |>
+  ungroup() |>
+  filter(distinct_questions == 9)
 ```
 
 ## Rate my Professor
@@ -256,6 +264,10 @@ teacher_evals_clean |>
 #| label: question-1-high-low
 # code chunk for Q9
 
+teacher_evals_clean |>
+  select(teacher_id, question_no, SET_score_avg) |>
+  filter(question_no == 901) |>
+  arrange(desc(SET_score_avg))
 ```
 
 **11. Which instructors with one year of experience had the highest and lowest average percentage of students failing in the current semester across all their courses?**
@@ -264,6 +276,10 @@ teacher_evals_clean |>
 #| label: one-year-experience-failing-students
 # code chunk for Q10
 
+teacher_evals_clean |>
+  select(teacher_id, seniority, percent_failed_cur) |>
+  filter(seniority == 1) |>
+  arrange(desc(percent_failed_cur))
 ```
 
 **12. Which female instructors with either a doctorate or professional degree had the highest and lowest average percent of students responding to the evaluation across all their courses?**
@@ -272,4 +288,9 @@ teacher_evals_clean |>
 #| label: female-instructor-student-response
 # code chunk for Q11
 
+teacher_evals_clean |>
+  select(teacher_id, sex, resp_share, academic_degree) |>
+  filter(sex == "female",
+         academic_degree == c("dr", "prof")) |>
+  arrange(desc(resp_share))
 ```
